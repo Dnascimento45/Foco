@@ -3,6 +3,7 @@
 > Documento-base do projeto. O Claude o lê no início de cada sessão e o usa para entender o produto, o estado atual, o roteiro e **como trabalhamos**.
 > Mantenha-o atualizado: toda decisão importante muda este arquivo (ou gera um ADR, ver §7).
 > Fase atual: **planejamento e arquitetura**. Nenhum código de produto deve ser alterado sem combinarmos antes.
+> **Status (09/11/2026): pausado.** O foco passou para o **Papiro**, projeto pessoal (Daniel e uma amiga, Blocos A e C) que nasceu de uma cópia deste protótipo e vive em `../papiro`. Os dois repositórios são independentes e não se sincronizam sozinhos.
 
 ---
 
