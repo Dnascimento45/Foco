@@ -1,0 +1,45 @@
+# Dependências
+node_modules/
+.pnpm-store/
+
+# Builds e caches
+dist/
+build/
+.next/
+out/
+coverage/
+.cache/
+*.tsbuildinfo
+
+# Variáveis de ambiente e segredos (NUNCA versionar)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Python (demonstrações matemáticas)
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Sistema operacional
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Editor (mantém as configurações compartilhadas do VS Code)
+.vscode/*
+!.vscode/tasks.json
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+
+# Claude Code: configurações locais de cada pessoa
+.claude/settings.local.json

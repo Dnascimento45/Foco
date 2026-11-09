@@ -1,0 +1,13 @@
+﻿{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Servir Dojo de Estudos (porta 8765)",
+      "type": "shell",
+      "command": "powershell -NoProfile -ExecutionPolicy Bypass -File ${workspaceFolder}/servir.ps1 -Raiz ${workspaceFolder} -Porta 8765",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": { "reveal": "silent", "panel": "dedicated" }
+    }
+  ]
+}

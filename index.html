@@ -1,0 +1,973 @@
+<title>Dojo de Estudos</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+/* Layout: sumário vertical fixo à esquerda (como um pergaminho), folha de leitura centrada à direita, kanji em marca-d'água ao fundo.
+   Visual único e escuro por escolha: tinta sumi, papel washi e laca vermelha (shu). */
+:root{
+  color-scheme: dark;
+  --sumi:#0a0909;        /* fundo */
+  --sumi-2:#121010;      /* superfícies */
+  --sumi-3:#1b1716;      /* hover / elevado */
+  --linha:#2b2423;       /* fios */
+  --linha-forte:#403533;
+  --washi:#ede7dd;       /* texto principal */
+  --cinza:#a59c94;       /* texto secundário */
+  --cinza-2:#746a63;     /* metadados */
+  --shu:#c92a2f;         /* vermelho laca: traços, selos, preenchimentos */
+  --shu-vivo:#e8514f;    /* vermelho para texto sobre preto */
+  --shu-veu:rgba(201,42,47,.13);
+  --shu-borda:rgba(201,42,47,.5);
+  --ok:#c92a2f;
+  --f-titulo:"Shippori Mincho","Yu Mincho","Hiragino Mincho ProN",Georgia,"Times New Roman",serif;
+  --f-texto:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic","Segoe UI",system-ui,sans-serif;
+  --f-mono:ui-monospace,"Cascadia Mono",Consolas,"Courier New",monospace;
+  --lado:308px;
+  --topo:56px;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{background:var(--sumi)}
+body{background:var(--sumi);color:var(--washi);font-family:var(--f-texto);font-size:16px;line-height:1.7;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:60;background:var(--sumi)}
+a{color:var(--shu-vivo)}
+::selection{background:var(--shu);color:var(--washi)}
+:focus-visible{outline:2px solid var(--shu-vivo);outline-offset:2px;border-radius:2px}
+button{font:inherit;color:inherit}
+h1,h2,h3,h4{font-family:var(--f-titulo);font-weight:700;line-height:1.25;text-wrap:balance;margin:0}
+.kj{font-family:var(--f-titulo);font-weight:700}
+
+/* ---------- Estrutura ---------- */
+.app{display:grid;grid-template-columns:var(--lado) minmax(0,1fr);min-height:100vh;position:relative;z-index:1}
+.painel{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;border-right:1px solid var(--linha);background:var(--sumi);z-index:40}
+.painel-topo{padding:22px 18px 14px;display:grid;gap:16px;border-bottom:1px solid var(--linha)}
+.marca{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--washi)}
+.selo{width:40px;height:40px;flex:none;display:grid;place-items:center;border:1.5px solid var(--shu);color:var(--shu-vivo);font-family:var(--f-titulo);font-weight:800;font-size:22px;border-radius:3px;line-height:1}
+.selo.cheio{background:var(--shu);color:var(--sumi);border-color:var(--shu)}
+.marca b{display:block;font-family:var(--f-titulo);font-size:18px;font-weight:800;letter-spacing:.01em;line-height:1.2}
+.marca small{display:block;font-size:11.5px;color:var(--cinza);letter-spacing:.08em;text-transform:uppercase}
+.busca{position:relative}
+.busca input{width:100%;background:var(--sumi-2);border:1px solid var(--linha);border-radius:3px;color:var(--washi);font:inherit;font-size:14px;padding:8px 34px 8px 12px}
+.busca input::placeholder{color:var(--cinza-2)}
+.busca input:focus{outline:none;border-color:var(--shu-borda)}
+.busca kbd{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-family:var(--f-mono);font-size:11px;color:var(--cinza-2);border:1px solid var(--linha);border-radius:3px;padding:0 5px}
+.painel-arvore{flex:1;overflow:auto;padding:10px 10px 28px;scrollbar-width:thin;scrollbar-color:var(--linha-forte) transparent}
+.painel-pe{padding:12px 18px;border-top:1px solid var(--linha);font-size:12px;color:var(--cinza-2);display:flex;justify-content:space-between;gap:8px}
+.painel-pe .kj{color:var(--shu);letter-spacing:.3em}
+
+.principal{min-width:0;display:flex;flex-direction:column}
+.topo{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;height:var(--topo);display:flex;align-items:center;gap:12px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  background:rgba(10,9,9,.88);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-bottom:1px solid var(--linha)}
+.btn-menu{display:none;align-items:center;gap:8px;background:none;border:1px solid var(--linha);border-radius:3px;padding:6px 10px;cursor:pointer;font-size:13px;color:var(--washi)}
+.migalhas{display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden;white-space:nowrap;font-size:13px;color:var(--cinza)}
+.migalhas a{color:var(--cinza);text-decoration:none}
+.migalhas a:hover{color:var(--washi)}
+.migalhas .sep{color:var(--shu);flex:none}
+.migalhas .fim{color:var(--washi);overflow:hidden;text-overflow:ellipsis}
+.migalhas > *{flex:none}
+.migalhas > .fim{flex:0 1 auto;min-width:0}
+
+.folha{width:100%;max-width:800px;margin:0 auto;padding-block:44px 120px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* Kanji ao fundo */
+.marca-dagua{position:fixed;right:max(-2vw,-24px);bottom:-6vh;z-index:0;pointer-events:none;user-select:none;font-family:var(--f-titulo);font-weight:800;
+  font-size:min(46vw,560px);line-height:1;color:var(--washi);opacity:.035;transition:opacity .4s}
+.lema{position:fixed;top:50%;right:calc(14px + env(safe-area-inset-right,0px));transform:translateY(-50%);z-index:2;pointer-events:none;
+  writing-mode:vertical-rl;font-family:var(--f-titulo);font-weight:700;font-size:14px;letter-spacing:.6em;color:var(--shu);opacity:.7}
+.lema small{display:block;margin-top:14px;font-family:var(--f-texto);font-size:10px;letter-spacing:.25em;color:var(--cinza-2);font-weight:400}
+
+/* ---------- Árvore ---------- */
+.arv,.arv ul{list-style:none;margin:0;padding:0}
+.arv > li + li{margin-top:14px}
+.arv-linha{display:flex;align-items:flex-start;padding-left:calc(var(--nivel,0) * 13px)}
+.arv-seta{flex:none;width:22px;height:30px;border:0;background:none;cursor:pointer;display:grid;place-items:center;color:var(--cinza-2);border-radius:3px}
+.arv-seta svg{width:9px;height:9px;transition:transform .15s}
+.arv-seta[aria-expanded="true"] svg{transform:rotate(90deg)}
+.arv-seta[aria-expanded="true"]{color:var(--shu-vivo)}
+.arv-seta:hover{color:var(--washi)}
+.arv-seta.vazio{cursor:default}
+.arv-linha a{flex:1;min-width:0;display:flex;align-items:baseline;gap:8px;padding:5px 8px;border-radius:3px;color:var(--cinza);text-decoration:none;font-size:13.5px;line-height:1.45}
+.arv-linha a:hover{background:var(--sumi-3);color:var(--washi)}
+.arv-linha a .kj{color:var(--shu-vivo);font-size:14px;flex:none}
+.arv-linha a .t{min-width:0}
+.arv-linha a .x{margin-left:auto;flex:none;font-size:11px;color:var(--cinza-2);font-variant-numeric:tabular-nums}
+.n-secao > .arv-linha a{font-family:var(--f-titulo);font-size:15px;font-weight:700;color:var(--washi)}
+.n-conteudo > .arv-linha a{color:var(--washi)}
+.n-assunto > .arv-linha a{font-size:13px}
+.ativo > .arv-linha a{background:var(--shu-veu);color:var(--washi);box-shadow:inset 2px 0 0 var(--shu)}
+.feito-mini{flex:none;font-family:var(--f-titulo);font-size:10px;font-weight:800;color:var(--shu-vivo);border:1px solid var(--shu-borda);border-radius:2px;padding:0 2px;line-height:1.4;align-self:center}
+.res-busca{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.res-busca a{display:block;padding:7px 10px;border-radius:3px;text-decoration:none;color:var(--washi);font-size:13.5px;line-height:1.4}
+.res-busca a:hover{background:var(--sumi-3)}
+.res-busca small{display:block;color:var(--cinza-2);font-size:11.5px;margin-top:2px}
+.res-busca mark{background:none;color:var(--shu-vivo)}
+.res-vazio{padding:10px;color:var(--cinza);font-size:13px}
+
+/* ---------- Elementos comuns ---------- */
+.sobre{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--cinza);margin:0 0 10px;display:flex;align-items:center;gap:10px}
+.sobre::before{content:"";width:22px;height:1.5px;background:var(--shu)}
+.cab{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:start;margin-bottom:34px}
+.cab h1{font-size:clamp(30px,5vw,44px);font-weight:800;letter-spacing:-.005em}
+.cab .lead{color:var(--cinza);font-size:16.5px;margin:12px 0 0;max-width:62ch}
+.cab-kanji{font-family:var(--f-titulo);font-weight:800;font-size:clamp(64px,10vw,104px);line-height:.9;color:var(--shu)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px}
+.chip{font-size:12px;color:var(--cinza);border:1px solid var(--linha-forte);border-radius:2px;padding:2px 8px;line-height:1.6}
+.chip.shu{color:var(--shu-vivo);border-color:var(--shu-borda)}
+.nota{font-size:14px;color:var(--cinza);margin:12px 0 0}
+.conferir{margin-top:16px;display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:var(--cinza);border-left:2px solid var(--shu);padding:6px 0 6px 12px;max-width:66ch}
+.conferir b{color:var(--shu-vivo);font-weight:700;white-space:nowrap}
+.numeros{display:flex;flex-wrap:wrap;gap:6px 22px;margin-top:18px;font-size:13.5px;color:var(--cinza)}
+.numeros b{color:var(--washi);font-weight:700;font-variant-numeric:tabular-nums;font-size:15px}
+.barra{height:3px;background:var(--linha);border-radius:2px;overflow:hidden}
+.barra i{display:block;height:100%;background:var(--shu);border-radius:2px}
+.titulo-sec{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--cinza);font-family:var(--f-texto);font-weight:500;margin:52px 0 16px;display:flex;align-items:center;gap:12px}
+.titulo-sec::after{content:"";flex:1;height:1px;background:var(--linha)}
+
+/* Início */
+.hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:28px;align-items:center;margin-bottom:12px}
+.hero h1{font-size:clamp(40px,7vw,64px);font-weight:800;line-height:1.05}
+.hero .lead{color:var(--cinza);font-size:17px;max-width:54ch;margin:16px 0 0}
+.hero-kanji{font-family:var(--f-titulo);font-weight:800;font-size:clamp(120px,18vw,210px);line-height:.85;color:var(--shu);position:relative}
+.hero-kanji small{position:absolute;right:-4px;bottom:-26px;font-size:12px;font-weight:500;letter-spacing:.2em;color:var(--cinza-2);font-family:var(--f-texto)}
+.continuar{margin-top:26px;display:inline-flex;align-items:center;gap:14px;text-decoration:none;color:var(--washi);border:1px solid var(--shu-borda);border-radius:3px;padding:10px 16px;background:var(--shu-veu)}
+.continuar span{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--shu-vivo)}
+.continuar:hover{border-color:var(--shu)}
+.grade-secoes{display:grid;gap:14px}
+.card-secao{display:grid;grid-template-columns:auto minmax(0,1fr);gap:18px;padding:22px;border:1px solid var(--linha);border-radius:4px;background:var(--sumi-2);text-decoration:none;color:var(--washi);transition:border-color .2s,background .2s}
+.card-secao:hover{border-color:var(--shu-borda);background:var(--sumi-3)}
+.card-secao .selo{width:52px;height:52px;font-size:28px}
+.card-secao h2{font-size:22px}
+.card-secao p{margin:6px 0 0;color:var(--cinza);font-size:14.5px}
+.card-secao .rodape{display:flex;align-items:center;gap:14px;margin-top:14px;font-size:12.5px;color:var(--cinza-2);font-variant-numeric:tabular-nums}
+.card-secao .rodape .barra{flex:1;max-width:220px}
+.mapa{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:18px 20px;border:1px dashed var(--linha-forte);border-radius:4px;font-size:14px}
+.mapa .nivel{display:grid;gap:2px}
+.mapa .nivel small{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--cinza-2)}
+.mapa .nivel b{font-weight:500}
+.mapa .sep{color:var(--shu)}
+.aviso-edital{margin-top:28px;font-size:13px;color:var(--cinza-2);max-width:68ch}
+
+/* Seção: grade de conteúdos */
+.grade-conteudos{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.tile{display:flex;flex-direction:column;gap:10px;padding:18px;border:1px solid var(--linha);border-radius:4px;text-decoration:none;color:var(--washi);background:var(--sumi-2);transition:border-color .2s,background .2s;min-width:0}
+.tile:hover{border-color:var(--shu-borda);background:var(--sumi-3)}
+.tile .kj{font-size:34px;color:var(--shu-vivo);line-height:1}
+.tile h3{font-size:17.5px}
+.tile .meta{font-size:12.5px;color:var(--cinza-2);font-variant-numeric:tabular-nums;margin-top:auto}
+.tile .ref{font-size:11.5px;color:var(--shu-vivo);letter-spacing:.04em}
+
+/* Listas de matérias e assuntos */
+.materia{margin-top:34px}
+.materia-cab{display:flex;align-items:baseline;justify-content:space-between;gap:14px;padding-bottom:10px;border-bottom:1px solid var(--linha-forte)}
+.materia-cab h2{font-size:21px}
+.materia-cab h2 a{color:var(--washi);text-decoration:none}
+.materia-cab h2 a:hover{color:var(--shu-vivo)}
+.materia-cab span{font-size:12.5px;color:var(--cinza-2);flex:none;font-variant-numeric:tabular-nums}
+.lista-assuntos{list-style:none;margin:0;padding:0}
+.lista-assuntos a{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:10px;align-items:center;padding:11px 4px;border-bottom:1px solid var(--linha);text-decoration:none;color:var(--washi)}
+.lista-assuntos a:hover{background:linear-gradient(90deg,var(--shu-veu),transparent 70%)}
+.lista-assuntos .n{font-size:12px;color:var(--cinza-2);font-variant-numeric:tabular-nums}
+.lista-assuntos .t{font-size:15px;line-height:1.45}
+.lista-assuntos .t small{display:block;color:var(--cinza-2);font-size:12.5px}
+.estado{display:flex;align-items:center;gap:8px}
+.ponto{width:7px;height:7px;border-radius:50%;border:1px solid var(--linha-forte)}
+.ponto.cheio{background:var(--washi);border-color:var(--washi)}
+.carimbo{font-family:var(--f-titulo);font-weight:800;font-size:12px;color:var(--shu-vivo);border:1.5px solid var(--shu);border-radius:3px;width:22px;height:22px;display:grid;place-items:center;transform:rotate(-6deg)}
+.legenda-lista{display:flex;flex-wrap:wrap;gap:16px;margin-top:14px;font-size:12px;color:var(--cinza-2);align-items:center}
+.legenda-lista span{display:inline-flex;align-items:center;gap:6px}
+
+/* Assunto */
+.ferramentas{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:20px}
+.btn{display:inline-flex;align-items:center;gap:10px;border:1px solid var(--linha-forte);background:var(--sumi-2);border-radius:3px;padding:8px 14px;cursor:pointer;font-size:14px;color:var(--washi);text-decoration:none}
+.btn:hover{border-color:var(--shu-borda)}
+.btn .kj{color:var(--shu-vivo)}
+.btn.feito{background:var(--shu);border-color:var(--shu);color:var(--washi)}
+.btn.feito .kj{color:var(--washi)}
+.incid{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--cinza)}
+.incid b{color:var(--shu-vivo);font-weight:700}
+.vazio-box{margin-top:12px;padding:34px 26px;border:1px dashed var(--linha-forte);border-radius:4px;text-align:center;display:grid;gap:10px;justify-items:center}
+.vazio-box .kj{font-size:54px;color:var(--linha-forte);line-height:1}
+.vazio-box p{margin:0;color:var(--cinza);max-width:46ch}
+.caminho{display:flex;align-items:center;gap:8px;max-width:100%;margin-top:6px}
+.caminho code{font-family:var(--f-mono);font-size:12.5px;color:var(--cinza);background:var(--sumi-2);border:1px solid var(--linha);border-radius:3px;padding:5px 9px;overflow-x:auto;white-space:nowrap;max-width:100%;user-select:all}
+.caminho button{flex:none;border:1px solid var(--linha);background:none;border-radius:3px;padding:4px 9px;font-size:12px;color:var(--cinza);cursor:pointer}
+.caminho button:hover{color:var(--washi);border-color:var(--shu-borda)}
+.navegar{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:64px;padding-top:22px;border-top:1px solid var(--linha)}
+.navegar a{display:grid;gap:2px;text-decoration:none;color:var(--washi);padding:12px 14px;border:1px solid var(--linha);border-radius:3px;min-width:0}
+.navegar a:hover{border-color:var(--shu-borda)}
+.navegar small{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--cinza-2)}
+.navegar span{font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.navegar .prox{text-align:right;grid-column:2}
+.fontes{margin-top:44px;font-size:13.5px;color:var(--cinza)}
+.fontes h2{font-family:var(--f-texto);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--cinza-2);font-weight:500;margin-bottom:8px}
+.fontes ul{margin:0;padding-left:18px}
+
+/* ---------- Blocos de conteúdo ---------- */
+.blocos{display:grid;gap:26px}
+.prosa{max-width:68ch}
+.prosa h2{font-size:24px;margin:8px 0 10px}
+.prosa h4{font-family:var(--f-texto);font-size:15px;font-weight:700;margin:18px 0 6px}
+.prosa p{margin:0 0 14px}
+.prosa p:last-child{margin-bottom:0}
+.prosa ul,.prosa ol{margin:0 0 14px;padding-left:22px}
+.prosa li{margin:4px 0}
+.prosa li::marker{color:var(--shu-vivo)}
+.prosa strong{color:#fff;font-weight:700}
+.prosa em{color:var(--washi)}
+.prosa code{font-family:var(--f-mono);font-size:.9em;background:var(--sumi-3);padding:1px 5px;border-radius:3px}
+.prosa mark{background:var(--shu-veu);color:var(--washi);padding:0 3px;border-bottom:1px solid var(--shu)}
+.mat{font-family:var(--f-titulo);font-size:1.08em;white-space:nowrap}
+.bloco{border:1px solid var(--linha);border-radius:4px;background:var(--sumi-2);overflow:hidden}
+.bloco-cab{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--linha)}
+.bloco-cab .kj{color:var(--shu-vivo);font-size:17px;line-height:1}
+.bloco-cab span:last-child{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--cinza)}
+.bloco-corpo{padding:16px 18px}
+.bloco.callout{border:0;border-left:2px solid var(--shu);border-radius:0;background:linear-gradient(90deg,var(--shu-veu),transparent 85%)}
+.bloco.callout .bloco-cab{border:0;padding-bottom:0}
+.bloco.callout .bloco-corpo{padding-top:8px}
+.bloco.atencao{border-left-color:var(--shu-vivo)}
+.formula{display:grid;gap:12px;justify-items:center;padding:12px 0 6px;overflow-x:auto}
+.formula div{font-family:var(--f-titulo);font-size:21px;white-space:nowrap;letter-spacing:.01em}
+.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 .15em;line-height:1.15}
+.frac > span{padding:0 .25em}
+.frac > span:first-child{border-bottom:1.5px solid currentColor;padding-bottom:2px}
+.frac > span:last-child{padding-top:2px}
+.legenda{font-size:13.5px;color:var(--cinza);margin-top:10px;text-align:center}
+.passos{list-style:none;margin:0;padding:0;counter-reset:p;display:grid;gap:12px}
+.passos li{counter-increment:p;display:grid;grid-template-columns:30px minmax(0,1fr);gap:12px;align-items:start}
+.passos li::before{content:counter(p);font-family:var(--f-titulo);font-weight:800;color:var(--shu-vivo);font-size:15px;width:28px;height:28px;border:1.5px solid var(--shu-borda);border-radius:50%;display:grid;place-items:center}
+.exemplo .enunciado{margin-bottom:12px}
+.exemplo details{border-top:1px solid var(--linha);padding-top:12px;margin-top:4px}
+.exemplo summary{cursor:pointer;color:var(--shu-vivo);font-size:14px;list-style:none;display:inline-flex;align-items:center;gap:8px}
+.exemplo summary::-webkit-details-marker{display:none}
+.exemplo summary::before{content:"＋";font-size:13px}
+.exemplo details[open] summary::before{content:"－"}
+.exemplo .resolucao{margin-top:12px}
+.resposta{margin-top:12px;display:inline-flex;gap:10px;align-items:baseline;border:1px solid var(--shu-borda);border-radius:3px;padding:6px 12px}
+.resposta small{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--shu-vivo)}
+.tabela-wrap{overflow-x:auto;margin:4px 0}
+table{border-collapse:collapse;width:100%;font-size:14.5px;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--linha)}
+th{font-weight:500;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--cinza);border-bottom-color:var(--linha-forte)}
+.lei blockquote{margin:0;font-family:var(--f-titulo);font-size:16.5px;line-height:1.75}
+.lei .ref{margin-top:10px;font-size:12.5px;color:var(--cinza)}
+figure{margin:0}
+figure img{display:block;width:100%;height:auto;border-radius:3px;background:var(--sumi)}
+figcaption{font-size:13.5px;color:var(--cinza);margin-top:10px}
+.svg-wrap{overflow-x:auto}
+.svg-wrap svg{display:block;width:100%;height:auto;min-width:460px}
+.cartas{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.carta{min-height:132px;text-align:left;border:1px solid var(--linha-forte);background:var(--sumi);border-radius:4px;padding:16px;cursor:pointer;display:flex;flex-direction:column;gap:8px;transition:border-color .2s,background .2s}
+.carta:hover{border-color:var(--shu-borda)}
+.carta small{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--cinza-2)}
+.carta .verso{display:none;color:var(--washi)}
+.carta .frente{font-family:var(--f-titulo);font-size:17px;font-weight:700}
+.carta.virada{background:var(--shu-veu);border-color:var(--shu-borda)}
+.carta.virada .frente{display:none}
+.carta.virada .verso{display:block}
+.carta.virada small{color:var(--shu-vivo)}
+.q-meta{font-size:12px;color:var(--cinza-2);margin-bottom:8px;letter-spacing:.04em}
+.q-alts{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:8px}
+.q-alts button{width:100%;display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;align-items:start;text-align:left;border:1px solid var(--linha);background:var(--sumi);border-radius:3px;padding:10px 12px;cursor:pointer;font-size:15px;line-height:1.5;color:var(--washi)}
+.q-alts button:hover:not(:disabled){border-color:var(--shu-borda)}
+.q-alts button b{font-family:var(--f-titulo);color:var(--cinza)}
+.q-alts button:disabled{cursor:default}
+.q-alts .certa{border-color:var(--washi);background:rgba(237,231,221,.07)}
+.q-alts .certa b{color:var(--washi)}
+.q-alts .errada{border-color:var(--shu);background:var(--shu-veu)}
+.q-alts .errada b{color:var(--shu-vivo)}
+.q-retorno{margin-top:14px;padding-top:12px;border-top:1px solid var(--linha)}
+.q-retorno .veredito{font-weight:700;margin-bottom:6px}
+.q-retorno .veredito.ok{color:var(--washi)}
+.q-retorno .veredito.nao{color:var(--shu-vivo)}
+.q-refazer{margin-top:10px;background:none;border:0;color:var(--cinza);font-size:13px;cursor:pointer;text-decoration:underline;padding:0}
+.links{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.links small{display:block;color:var(--cinza-2);font-size:12.5px}
+.aviso-bloco{border:1px dashed var(--shu-borda);border-radius:3px;padding:12px 14px;font-size:13.5px;color:var(--cinza)}
+.aviso-bloco b{color:var(--shu-vivo)}
+
+/* Problemas de carregamento */
+.problemas{border:1px solid var(--shu-borda);background:var(--shu-veu);border-radius:4px;padding:12px 16px;margin-bottom:28px;font-size:13.5px}
+.problemas summary{cursor:pointer;color:var(--washi);font-weight:700}
+.problemas ul{margin:10px 0 6px;padding-left:18px;color:var(--cinza)}
+.problemas code{font-family:var(--f-mono);font-size:12px;color:var(--washi)}
+.problemas p{margin:6px 0 0;color:var(--cinza-2)}
+.carregando{color:var(--cinza);padding:60px 0;text-align:center}
+.carregando .kj{display:block;font-size:60px;color:var(--shu);margin-bottom:10px}
+
+.veu{display:none}
+
+/* ---------- Responsivo ---------- */
+@media (max-width:1240px){.lema{display:none}}
+@media (max-width:920px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .painel{position:fixed;inset:0 auto 0 0;width:min(88vw,340px);height:100%;transform:translateX(-102%);transition:transform .25s ease;
+    padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px)}
+  body.menu-aberto .painel{transform:none;box-shadow:20px 0 60px rgba(0,0,0,.6)}
+  body.menu-aberto .veu{display:block;position:fixed;inset:0;z-index:35;background:rgba(0,0,0,.55)}
+  .btn-menu{display:inline-flex}
+  .marca-dagua{font-size:70vw;opacity:.03}
+}
+@media (max-width:600px){
+  .folha{padding-block:30px 96px}
+  .hero{grid-template-columns:minmax(0,1fr)}
+  .hero-kanji{display:none}
+  .cab{grid-template-columns:minmax(0,1fr)}
+  .cab-kanji{display:none}
+  .card-secao{grid-template-columns:minmax(0,1fr);padding:18px}
+  .navegar{grid-template-columns:minmax(0,1fr)}
+  .navegar .prox{grid-column:1}
+  .formula div{font-size:18px}
+  .migalhas .meio{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="app">
+  <aside class="painel" id="painel" aria-label="Sumário">
+    <div class="painel-topo">
+      <a class="marca" href="#">
+        <span class="selo cheio" aria-hidden="true">道</span>
+        <span><b>Dojo de Estudos</b><small>Blocos A e C · 2027</small></span>
+      </a>
+      <div class="busca">
+        <label for="campo-busca" class="sr" hidden>Buscar assunto</label>
+        <input id="campo-busca" type="search" placeholder="Buscar assunto, lei, matéria…" autocomplete="off">
+        <kbd>/</kbd>
+      </div>
+    </div>
+    <nav class="painel-arvore" id="arvore" aria-label="Seções, conteúdos e assuntos"></nav>
+    <div class="painel-pe"><span id="progresso-geral">—</span><span class="kj" aria-hidden="true">一意専心</span></div>
+  </aside>
+  <div class="veu" id="veu"></div>
+  <div class="principal">
+    <header class="topo">
+      <button class="btn-menu" id="btn-menu" aria-controls="painel" aria-expanded="false">
+        <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M1 3h12M1 7h12M1 11h12" stroke="currentColor" stroke-width="1.5"/></svg>Sumário
+      </button>
+      <nav class="migalhas" id="migalhas" aria-label="Você está em"></nav>
+    </header>
+    <main class="folha" id="conteudo">
+      <div class="carregando"><span class="kj">道</span>Carregando o caderno…</div>
+    </main>
+  </div>
+</div>
+<div class="marca-dagua" id="marca-dagua" aria-hidden="true">道</div>
+<div class="lema" aria-hidden="true">七転八起<small>CAIR SETE · LEVANTAR OITO</small></div>
+
+<script>
+/* =====================================================================
+   MOTOR DO CADERNO
+   Você não precisa mexer aqui para adicionar conteúdo.
+   Todo o conteúdo fica na pasta conteudos/ (veja conteudos/indice.js
+   e o guia em conteudos/_MODELO.js).
+   ===================================================================== */
+window.ESTUDO = (function () {
+  'use strict';
+
+  /* ---------- Registro (chamado pelos arquivos de conteúdo) ---------- */
+  var reg = { secoes: [], conteudos: [], assuntos: [] };
+  var problemas = [];
+  var carregou = false, pronto = false;
+
+  function arquivoAtual() {
+    var s = document.currentScript;
+    return (s && s.getAttribute('src')) || 'index.html';
+  }
+  function problema(arquivo, msg) {
+    problemas.push({ arquivo: arquivo, msg: msg });
+    if (pronto) render();
+  }
+  window.addEventListener('error', function (e) {
+    if (!e.message) return;
+    var f = e.filename || '';
+    var i = f.indexOf('conteudos/');
+    f = i >= 0 ? f.slice(i) : (f.split('/').pop() || 'página');
+    problema(f, e.message + (e.lineno ? ' (linha ' + e.lineno + ')' : ''));
+  });
+
+  var api = {
+    secao: function (def) {
+      if (!def || !def.titulo) return problema(arquivoAtual(), 'ESTUDO.secao() precisa de um "titulo".');
+      reg.secoes.push({ def: def, arquivo: arquivoAtual(), i: reg.secoes.length });
+    },
+    conteudo: function (secaoId, def) {
+      var a = arquivoAtual();
+      if (typeof secaoId !== 'string') return problema(a, 'ESTUDO.conteudo() precisa do id da seção como primeiro argumento, ex.: ESTUDO.conteudo("nucleo", {...}).');
+      if (!def || (!def.titulo && !def.ref)) return problema(a, 'ESTUDO.conteudo() precisa de um "titulo" (ou de "ref" para reaproveitar outro conteúdo).');
+      reg.conteudos.push({ secaoId: secaoId, def: def, arquivo: a, i: reg.conteudos.length });
+    },
+    assunto: function (caminho, def) {
+      var a = arquivoAtual();
+      if (typeof caminho !== 'string') return problema(a, 'ESTUDO.assunto() precisa do caminho do assunto, ex.: "nucleo/matematica/aritmetica/regra-de-tres".');
+      if (!def) return problema(a, 'ESTUDO.assunto("' + caminho + '") está sem conteúdo.');
+      reg.assuntos.push({ caminho: caminho, def: def, arquivo: a });
+    },
+    carregar: function (lista) {
+      if (carregou) return;
+      carregou = true;
+      if (!Array.isArray(lista)) { problema('conteudos/indice.js', 'ESTUDO.carregar() espera uma lista de arquivos entre colchetes [ ].'); lista = []; }
+      var faltam = lista.length;
+      if (!faltam) return iniciar();
+      function fim() { if (--faltam === 0) iniciar(); }
+      lista.forEach(function (src) {
+        var s = document.createElement('script');
+        s.src = src; s.async = false;
+        s.onload = fim;
+        s.onerror = function () { problema(src, 'arquivo não encontrado. Confira o nome em conteudos/indice.js.'); fim(); };
+        document.head.appendChild(s);
+      });
+    },
+    falhou: function (src) { problema(src, 'arquivo não encontrado.'); }
+  };
+
+  window.addEventListener('load', function () {
+    setTimeout(function () {
+      if (!carregou) { carregou = true; problema('conteudos/indice.js', 'o índice de arquivos não foi carregado.'); iniciar(); }
+    }, 0);
+  });
+
+  /* ---------- Utilidades ---------- */
+  function h(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function norm(s) { return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); }
+  function slug(s) { return norm(s).replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''); }
+  function normCaminho(c) { return String(c).split('/').map(slug).filter(Boolean).join('/'); }
+  function porOrdem(a, b) {
+    var oa = a.def.ordem == null ? 1e9 : +a.def.ordem, ob = b.def.ordem == null ? 1e9 : +b.def.ordem;
+    return oa - ob;
+  }
+  var memoria = {
+    ler: function (k, padrao) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : padrao; } catch (e) { return padrao; } },
+    gravar: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { } }
+  };
+  function fmt(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+
+  /* ---------- Construção da árvore ---------- */
+  var raiz = [], nos = new Map();
+
+  function novoId(titulo, id, irmaos, arquivo) {
+    var base = slug(id || titulo) || 'item', final = base, n = 2;
+    while (irmaos.some(function (x) { return x.id === final; })) final = base + '-' + (n++);
+    if (final !== base) problema(arquivo, '"' + titulo + '" repete um id que já existe neste nível; usei "' + final + '". Dê um "id" diferente para evitar confusão.');
+    return final;
+  }
+  function criar(tipo, def, pai, arquivo) {
+    var no = { tipo: tipo, def: Object.assign({}, def), arquivo: arquivo, pai: pai, filhos: [], titulo: String(def.titulo) };
+    no.id = novoId(no.titulo, def.id, pai ? pai.filhos : raiz, arquivo);
+    no.caminho = pai ? pai.caminho + '/' + no.id : no.id;
+    (pai ? pai.filhos : raiz).push(no);
+    nos.set(no.caminho, no);
+    return no;
+  }
+
+  function construir() {
+    reg.secoes.forEach(function (r) { criar('secao', r.def, null, r.arquivo); });
+    raiz.sort(porOrdem);
+
+    var refs = [];
+    reg.conteudos.forEach(function (r) {
+      var sec = nos.get(slug(r.secaoId));
+      if (!sec || sec.tipo !== 'secao') return problema(r.arquivo, 'a seção "' + r.secaoId + '" não existe. As seções ficam em conteudos/secoes.js.');
+      var def = r.def;
+      if (def.ref) {
+        var no = { tipo: 'conteudo', ref: normCaminho(def.ref), def: Object.assign({}, def), arquivo: r.arquivo, pai: sec, filhos: [], titulo: def.titulo || def.ref };
+        no.id = novoId(no.titulo, 'ref-' + no.ref.replace(/\//g, '-'), sec.filhos, r.arquivo);
+        no.caminho = sec.caminho + '/' + no.id;
+        sec.filhos.push(no);
+        refs.push(no);
+        return;
+      }
+      var c = criar('conteudo', def, sec, r.arquivo);
+      (Array.isArray(def.materias) ? def.materias : []).forEach(function (m, mi) {
+        if (!m || !m.titulo) return problema(r.arquivo, 'a matéria nº ' + (mi + 1) + ' de "' + c.titulo + '" está sem "titulo".');
+        var mat = criar('materia', m, c, r.arquivo);
+        (Array.isArray(m.assuntos) ? m.assuntos : []).forEach(function (a, ai) {
+          var ad = typeof a === 'string' ? { titulo: a } : a;
+          if (!ad || !ad.titulo) return problema(r.arquivo, 'o assunto nº ' + (ai + 1) + ' de "' + mat.titulo + '" está sem "titulo".');
+          var as = criar('assunto', ad, mat, r.arquivo);
+          as.blocos = Array.isArray(ad.blocos) ? ad.blocos.slice() : [];
+        });
+      });
+    });
+    raiz.forEach(function (s) { s.filhos.sort(porOrdem); });
+
+    refs.forEach(function (r) {
+      var alvo = nos.get(r.ref);
+      if (!alvo || alvo.tipo !== 'conteudo') {
+        problema(r.arquivo, 'a referência "' + r.def.ref + '" não aponta para um conteúdo existente.');
+        r.pai.filhos.splice(r.pai.filhos.indexOf(r), 1);
+        return;
+      }
+      r.alvo = alvo;
+      r.titulo = r.def.titulo || alvo.titulo;
+      nos.set(r.caminho, r);
+    });
+
+    reg.assuntos.forEach(function (r) {
+      var c = normCaminho(r.caminho), no = nos.get(c);
+      if (!no || no.tipo !== 'assunto') return problema(r.arquivo, 'o assunto "' + r.caminho + '" não existe na estrutura. Abra o assunto no caderno e copie o caminho mostrado na página.');
+      if (Array.isArray(r.def.blocos)) no.blocos = no.blocos.concat(r.def.blocos);
+      else if (r.def.blocos) problema(r.arquivo, '"blocos" de "' + r.caminho + '" precisa ser uma lista [ ].');
+      ['resumo', 'conferir', 'fontes', 'nota', 'incidencia'].forEach(function (k) { if (r.def[k] != null) no.def[k] = r.def[k]; });
+    });
+  }
+
+  /* ---------- Consultas ---------- */
+  function real(no) { return no && no.ref ? no.alvo : no; }
+  function filhosDe(no) { var r = real(no); return r ? r.filhos : []; }
+  function assuntosDe(no) {
+    if (!no) return [];
+    if (no.tipo === 'assunto') return [no];
+    var out = [];
+    filhosDe(no).forEach(function (f) { out = out.concat(assuntosDe(f)); });
+    return out;
+  }
+  function todosAssuntos() { var o = []; nos.forEach(function (n) { if (n.tipo === 'assunto') o.push(n); }); return o; }
+  function kanjiDe(no) { var p = no; while (p) { var r = real(p); if (r && r.def.kanji) return r.def.kanji; p = p.pai; } return '道'; }
+  function secaoDe(no) { var p = no; while (p && p.pai) p = p.pai; return p; }
+  function conteudoDe(no) { var p = no; while (p && p.tipo !== 'conteudo') p = p.pai; return p; }
+  function href(no) { var r = real(no) || no; return '#' + r.caminho.split('/').join('--'); }
+  function temConteudo(a) { return a.blocos && a.blocos.length > 0; }
+
+  var estudados = memoria.ler('dojo.estudados', {});
+  function feito(a) { return !!estudados[a.caminho]; }
+  function contagem(no) {
+    var lista = assuntosDe(no), f = 0, c = 0;
+    lista.forEach(function (a) { if (feito(a)) f++; if (temConteudo(a)) c++; });
+    return { total: lista.length, feitos: f, comConteudo: c };
+  }
+  function barra(ct) { var p = ct.total ? Math.round(ct.feitos / ct.total * 100) : 0; return '<div class="barra" role="img" aria-label="' + p + '% estudado"><i style="width:' + p + '%"></i></div>'; }
+
+  /* ---------- Texto: mini-marcação ----------
+     **negrito**  *itálico*  `código`  ==destaque==  {{fórmula}}
+     linhas com "- " viram lista, "1. " lista numerada, "### " subtítulo, linha vazia separa parágrafos */
+  function formula(s) {
+    return s
+      .replace(/\[\[(.+?)\|\|(.+?)\]\]/g, function (_, a, b) { return '<span class="frac"><span>' + a.trim() + '</span><span>' + b.trim() + '</span></span>'; })
+      .replace(/\^\{(.+?)\}/g, '<sup>$1</sup>')
+      .replace(/_\{(.+?)\}/g, '<sub>$1</sub>');
+  }
+  function inline(s) {
+    return formula(h(s).replace(/\{\{(.+?)\}\}/g, function (_, f) { return '<span class="mat">' + f + '</span>'; }))
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/(^|[^*\w])\*(?!\s)(.+?)\*(?!\w)/g, '$1<em>$2</em>')
+      .replace(/`(.+?)`/g, '<code>$1</code>')
+      .replace(/==(.+?)==/g, '<mark>$1</mark>');
+  }
+  function md(txt) {
+    if (txt == null) return '';
+    if (Array.isArray(txt)) txt = txt.join('\n');
+    var out = '', lista = null, par = [];
+    function fp() { if (par.length) { out += '<p>' + inline(par.join(' ')) + '</p>'; par = []; } }
+    function fl() { if (lista) { out += '<' + lista.t + '>' + lista.itens.map(function (i) { return '<li>' + inline(i) + '</li>'; }).join('') + '</' + lista.t + '>'; lista = null; } }
+    String(txt).split('\n').forEach(function (l) {
+      var t = l.trim(), m;
+      if (!t) { fp(); fl(); return; }
+      if ((m = t.match(/^[-•]\s+(.*)$/))) { fp(); if (!lista || lista.t !== 'ul') { fl(); lista = { t: 'ul', itens: [] }; } lista.itens.push(m[1]); return; }
+      if ((m = t.match(/^\d+[.)]\s+(.*)$/))) { fp(); if (!lista || lista.t !== 'ol') { fl(); lista = { t: 'ol', itens: [] }; } lista.itens.push(m[1]); return; }
+      if ((m = t.match(/^#{2,4}\s+(.*)$/))) { fp(); fl(); out += '<h4>' + inline(m[1]) + '</h4>'; return; }
+      fl(); par.push(t);
+    });
+    fp(); fl();
+    return out;
+  }
+
+  /* ---------- Blocos de conteúdo ----------
+     Cada tipo vira um pedaço de HTML. Tipos desconhecidos mostram um aviso
+     em vez de quebrar a página. */
+  function moldura(kanji, rotulo, classe, corpo) {
+    return '<section class="bloco ' + classe + '"><header class="bloco-cab"><span class="kj" aria-hidden="true">' + kanji + '</span><span>' + h(rotulo) + '</span></header><div class="bloco-corpo">' + corpo + '</div></section>';
+  }
+  function tabelaHtml(cab, linhas) {
+    if (!Array.isArray(linhas)) throw new Error('"linhas" precisa ser uma lista de listas.');
+    return '<div class="tabela-wrap"><table>' +
+      (Array.isArray(cab) ? '<thead><tr>' + cab.map(function (c) { return '<th>' + inline(c) + '</th>'; }).join('') + '</tr></thead>' : '') +
+      '<tbody>' + linhas.map(function (l) { return '<tr>' + (Array.isArray(l) ? l : [l]).map(function (c) { return '<td>' + inline(c) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>';
+  }
+  var LETRAS = 'ABCDEFGH';
+  var contQ = 0;
+  var BLOCOS = {
+    texto: function (b) { return '<div class="prosa">' + (b.titulo ? '<h2>' + inline(b.titulo) + '</h2>' : '') + md(b.texto) + '</div>'; },
+    resumo: function (b) { return moldura('要', b.titulo || 'Resumo', 'callout', '<div class="prosa">' + md(b.texto) + '</div>'); },
+    dica: function (b) { return moldura('技', b.titulo || 'Dica', 'callout', '<div class="prosa">' + md(b.texto) + '</div>'); },
+    atencao: function (b) { return moldura('注', b.titulo || 'Atenção', 'callout atencao', '<div class="prosa">' + md(b.texto) + '</div>'); },
+    formula: function (b) {
+      var linhas = Array.isArray(b.expr) ? b.expr : [b.expr];
+      return moldura('式', b.titulo || 'Fórmula', '', '<div class="formula">' + linhas.map(function (l) { return '<div>' + formula(h(l)) + '</div>'; }).join('') + '</div>' + (b.legenda ? '<p class="legenda">' + inline(b.legenda) + '</p>' : ''));
+    },
+    passos: function (b) {
+      if (!Array.isArray(b.itens)) throw new Error('"itens" precisa ser uma lista.');
+      return moldura('順', b.titulo || 'Passo a passo', '', '<ol class="passos prosa">' + b.itens.map(function (i) { return '<li><div>' + inline(i) + '</div></li>'; }).join('') + '</ol>');
+    },
+    exemplo: function (b) {
+      var corpo = '<div class="prosa enunciado">' + md(b.enunciado) + '</div>' + (b.tabela ? tabelaHtml(b.tabela.cabecalho, b.tabela.linhas) : '');
+      if (b.resolucao || b.resposta) {
+        corpo += '<details' + (b.aberto ? ' open' : '') + '><summary>Ver resolução</summary><div class="prosa resolucao">' + md(b.resolucao) + '</div>' +
+          (b.resposta ? '<div class="resposta"><small>Resposta</small><span>' + inline(b.resposta) + '</span></div>' : '') + '</details>';
+      }
+      return moldura('例', b.titulo || 'Exemplo', 'exemplo', corpo);
+    },
+    tabela: function (b) { return moldura('表', b.titulo || 'Tabela', '', tabelaHtml(b.cabecalho, b.linhas) + (b.legenda ? '<p class="legenda">' + inline(b.legenda) + '</p>' : '')); },
+    lei: function (b) {
+      return moldura('法', b.titulo || 'Texto de lei', 'lei', '<blockquote>' + md(b.texto) + '</blockquote>' +
+        (b.referencia ? '<p class="ref">' + (b.url ? '<a href="' + h(b.url) + '" target="_blank" rel="noopener">' + h(b.referencia) + '</a>' : h(b.referencia)) + '</p>' : ''));
+    },
+    imagem: function (b) {
+      if (!b.src) throw new Error('falta o "src" da imagem.');
+      return moldura('図', b.titulo || 'Imagem', '', '<figure><img src="' + h(b.src) + '" alt="' + h(b.alt || b.legenda || '') + '" loading="lazy">' +
+        (b.legenda || b.credito ? '<figcaption>' + inline(b.legenda || '') + (b.credito ? ' <span style="color:var(--cinza-2)">· ' + h(b.credito) + '</span>' : '') + '</figcaption>' : '') + '</figure>');
+    },
+    svg: function (b) {
+      return moldura('図', b.titulo || 'Ilustração', '', '<figure><div class="svg-wrap">' + String(b.codigo || '') + '</div>' + (b.legenda ? '<figcaption>' + inline(b.legenda) + '</figcaption>' : '') + '</figure>');
+    },
+    flashcards: function (b) {
+      if (!Array.isArray(b.cartas)) throw new Error('"cartas" precisa ser uma lista de { frente, verso }.');
+      return moldura('札', b.titulo || 'Flashcards · clique para virar', '', '<div class="cartas">' + b.cartas.map(function (c) {
+        return '<button class="carta" type="button" aria-pressed="false"><small>Pergunta</small><span class="frente">' + inline(c.frente) + '</span><span class="verso prosa">' + md(c.verso) + '</span></button>';
+      }).join('') + '</div>');
+    },
+    questao: function (b) {
+      if (!Array.isArray(b.alternativas) || !b.alternativas.length) throw new Error('"alternativas" precisa ser uma lista.');
+      var correta = b.correta;
+      if (typeof correta === 'string') {
+        var ix = b.alternativas.map(norm).indexOf(norm(correta));
+        correta = ix >= 0 ? ix : LETRAS.indexOf(correta.trim().toUpperCase());
+      }
+      if (!(correta >= 0 && correta < b.alternativas.length)) throw new Error('"correta" deve ser o número da alternativa (0 = A) ou a letra.');
+      var meta = [b.banca, b.ano, b.cargo].filter(Boolean).map(h).join(' · ');
+      var id = 'q' + (++contQ);
+      return moldura('問', b.titulo || 'Questão', 'b-questao', (meta ? '<div class="q-meta">' + meta + '</div>' : '') +
+        '<div class="prosa">' + md(b.enunciado) + '</div>' +
+        '<ol class="q-alts" data-correta="' + correta + '" data-q="' + id + '">' + b.alternativas.map(function (a, i) {
+          return '<li><button type="button" data-alt="' + i + '"><b>' + LETRAS[i] + '</b><span>' + inline(a) + '</span></button></li>';
+        }).join('') + '</ol>' +
+        '<div class="q-retorno" hidden><div class="veredito"></div><div class="prosa">' + md(b.comentario || '') + '</div><button type="button" class="q-refazer">Refazer</button></div>');
+    },
+    link: function (b) {
+      var itens = b.itens || [{ titulo: b.titulo || b.url, url: b.url, nota: b.nota }];
+      return moldura('参', b.rotulo || 'Para consultar', '', '<ul class="links">' + itens.map(function (l) {
+        return '<li><a href="' + h(l.url) + '" target="_blank" rel="noopener">' + h(l.titulo || l.url) + '</a>' + (l.nota ? '<small>' + inline(l.nota) + '</small>' : '') + '</li>';
+      }).join('') + '</ul>');
+    }
+  };
+  function renderBloco(b, i) {
+    try {
+      if (!b || typeof b !== 'object') throw new Error('o bloco precisa ser um objeto { tipo: ..., }.');
+      var f = BLOCOS[b.tipo];
+      if (!f) return '<div class="aviso-bloco"><b>Bloco ' + (i + 1) + ':</b> o tipo "' + h(b.tipo) + '" não existe. Tipos válidos: ' + Object.keys(BLOCOS).join(', ') + '.</div>';
+      return f(b);
+    } catch (e) {
+      return '<div class="aviso-bloco"><b>Bloco ' + (i + 1) + ' (' + h(b && b.tipo) + '):</b> ' + h(e.message) + '</div>';
+    }
+  }
+
+  /* ---------- Vistas ---------- */
+  function chips(lista, classe) {
+    if (!Array.isArray(lista) || !lista.length) return '';
+    return '<div class="chips">' + lista.map(function (c) { return '<span class="chip ' + (classe || '') + '">' + h(c) + '</span>'; }).join('') + '</div>';
+  }
+  function conferirHtml(t) { return t ? '<div class="conferir"><b>Conferir</b><span>' + inline(t) + '</span></div>' : ''; }
+  function notaHtml(t) { return t ? '<p class="nota">' + inline(t) + '</p>' : ''; }
+  function estadoHtml(a) {
+    return '<span class="estado">' + (feito(a) ? '<span class="carimbo" title="Estudado">済</span>' : '<span class="ponto' + (temConteudo(a) ? ' cheio' : '') + '" title="' + (temConteudo(a) ? 'Com conteúdo' : 'Ainda sem conteúdo') + '"></span>') + '</span>';
+  }
+  function linhaAssunto(a, n) {
+    return '<li><a href="' + href(a) + '"><span class="n">' + String(n).padStart(2, '0') + '</span><span class="t">' + h(a.titulo) +
+      (a.def.resumo ? '<small>' + h(a.def.resumo) + '</small>' : '') + '</span>' + estadoHtml(a) + '</a></li>';
+  }
+  var legendaLista = '<div class="legenda-lista"><span><i class="ponto"></i> sem conteúdo</span><span><i class="ponto cheio"></i> com conteúdo</span><span><i class="carimbo" style="font-style:normal">済</i> estudado</span></div>';
+
+  function vInicio() {
+    var tot = todosAssuntos(), feitos = tot.filter(feito).length, nConteudos = 0;
+    nos.forEach(function (n) { if (n.tipo === 'conteudo' && !n.ref) nConteudos++; });
+    var ultimo = nos.get(memoria.ler('dojo.ultimo', ''));
+    var html = '<section class="hero"><div><p class="sobre">Concursos de nível médio · Paraná e federal</p>' +
+      '<h1>Dojo de Estudos</h1>' +
+      '<p class="lead">O edital-base dos blocos A e C num só lugar. Cada assunto tem o seu endereço: seção, conteúdo, matéria e assunto.</p>' +
+      '<div class="numeros"><span><b>' + raiz.length + '</b> seções</span><span><b>' + nConteudos + '</b> conteúdos</span><span><b>' + fmt(tot.length) + '</b> assuntos</span><span><b>' + feitos + '</b> estudados</span></div>' +
+      (ultimo && ultimo.tipo === 'assunto' ? '<a class="continuar" href="' + href(ultimo) + '"><span>Continuar</span>' + h(ultimo.titulo) + '</a>' : '') +
+      '</div><div class="hero-kanji" aria-hidden="true">道<small>DŌ · CAMINHO</small></div></section>';
+    html += '<h2 class="titulo-sec">Seções</h2><div class="grade-secoes">' + raiz.map(function (s) {
+      var ct = contagem(s);
+      return '<a class="card-secao" href="' + href(s) + '"><span class="selo" aria-hidden="true">' + h(s.def.kanji || '道') + '</span><div><h2>' + h(s.titulo) + '</h2>' +
+        (s.def.descricao ? '<p>' + inline(s.def.descricao) + '</p>' : '') +
+        '<div class="rodape"><span>' + s.filhos.length + ' conteúdos · ' + fmt(ct.total) + ' assuntos</span>' + barra(ct) + '<span>' + ct.feitos + '/' + ct.total + '</span></div></div></a>';
+    }).join('') + '</div>';
+    var exemplo = nos.get('nucleo/matematica/aritmetica/regra-de-tres');
+    html += '<h2 class="titulo-sec">Como o caderno se organiza</h2><div class="mapa">' +
+      ['Seção|Núcleo Comum', 'Conteúdo|Matemática', 'Matéria|Aritmética', 'Assunto|Regra de três'].map(function (p) {
+        var x = p.split('|'); return '<span class="nivel"><small>' + x[0] + '</small><b>' + x[1] + '</b></span>';
+      }).join('<span class="sep" aria-hidden="true">→</span>') +
+      (exemplo ? '<a class="btn" style="margin-left:auto" href="' + href(exemplo) + '"><span class="kj">例</span>Ver o assunto-modelo</a>' : '') + '</div>';
+    html += '<p class="aviso-edital">A estrutura reúne os conteúdos mais cobrados nesses concursos. Itens com a marca <b style="color:var(--shu-vivo)">Conferir</b> ainda dependem do edital oficial ou do site da banca.</p>';
+    return html;
+  }
+
+  function cabecalho(no, sobre, extra) {
+    var d = real(no).def;
+    return '<header class="cab"><div><p class="sobre">' + sobre + '</p><h1>' + h(no.titulo) + '</h1>' +
+      (d.descricao ? '<p class="lead">' + inline(d.descricao) + '</p>' : '') + (extra || '') + '</div>' +
+      '<div class="cab-kanji" aria-hidden="true">' + h(kanjiDe(no)) + '</div></header>';
+  }
+
+  function vSecao(s) {
+    var ct = contagem(s);
+    var extra = '<div class="numeros"><span><b>' + s.filhos.length + '</b> conteúdos</span><span><b>' + fmt(ct.total) + '</b> assuntos</span><span><b>' + ct.comConteudo + '</b> com conteúdo</span><span><b>' + ct.feitos + '</b> estudados</span></div>' +
+      notaHtml(s.def.nota) + conferirHtml(s.def.conferir);
+    var html = cabecalho(s, 'Seção', extra);
+    if (Array.isArray(s.def.concursos) && s.def.concursos.length) html += '<h2 class="titulo-sec">Concursos desta seção</h2>' + chips(s.def.concursos);
+    html += '<h2 class="titulo-sec">Conteúdos</h2><div class="grade-conteudos">' + s.filhos.map(function (c) {
+      var r = real(c), cc = contagem(c);
+      return '<a class="tile" href="' + href(c) + '"><span class="kj" aria-hidden="true">' + h(kanjiDe(c)) + '</span><h3>' + h(c.titulo) + '</h3>' +
+        (c.ref ? '<span class="ref">↗ compartilhado com ' + h(secaoDe(r).titulo) + '</span>' : '') +
+        '<span class="meta">' + r.filhos.length + ' matérias · ' + cc.total + ' assuntos</span>' + barra(cc) + '</a>';
+    }).join('') + '</div>';
+    return html;
+  }
+
+  function vConteudo(c) {
+    var ct = contagem(c), sec = secaoDe(c);
+    var extra = '<div class="numeros"><span><b>' + c.filhos.length + '</b> matérias</span><span><b>' + ct.total + '</b> assuntos</span><span><b>' + ct.comConteudo + '</b> com conteúdo</span><span><b>' + ct.feitos + '</b> estudados</span></div>' +
+      chips(c.def.concursos, 'shu') + notaHtml(c.def.nota) + conferirHtml(c.def.conferir);
+    var html = cabecalho(c, h(sec.titulo), extra);
+    var n = 0;
+    html += c.filhos.map(function (m) {
+      var cm = contagem(m);
+      return '<section class="materia"><div class="materia-cab"><h2><a href="' + href(m) + '">' + h(m.titulo) + '</a></h2><span>' + cm.feitos + '/' + cm.total + '</span></div>' +
+        conferirHtml(m.def.conferir) +
+        '<ul class="lista-assuntos">' + m.filhos.map(function (a) { return linhaAssunto(a, ++n); }).join('') + '</ul></section>';
+    }).join('');
+    return html + legendaLista;
+  }
+
+  function vMateria(m) {
+    var c = m.pai, ct = contagem(m), i = c.filhos.indexOf(m);
+    var extra = '<div class="numeros"><span><b>' + ct.total + '</b> assuntos</span><span><b>' + ct.comConteudo + '</b> com conteúdo</span><span><b>' + ct.feitos + '</b> estudados</span></div>' +
+      notaHtml(m.def.nota) + conferirHtml(m.def.conferir);
+    var html = cabecalho(m, h(c.titulo), extra);
+    html += '<ul class="lista-assuntos">' + m.filhos.map(function (a, k) { return linhaAssunto(a, k + 1); }).join('') + '</ul>' + legendaLista;
+    html += navegar(c.filhos[i - 1], c.filhos[i + 1], 'Matéria anterior', 'Próxima matéria');
+    return html;
+  }
+
+  function vAssunto(a) {
+    var m = a.pai, c = m.pai, d = a.def;
+    var lista = assuntosDe(c), i = lista.indexOf(a);
+    var html = '<header class="cab"><div><p class="sobre">' + h(c.titulo) + ' · ' + h(m.titulo) + '</p><h1>' + h(a.titulo) + '</h1>' +
+      (d.resumo ? '<p class="lead">' + inline(d.resumo) + '</p>' : '') +
+      '<div class="ferramentas"><button type="button" class="btn' + (feito(a) ? ' feito' : '') + '" data-acao="estudado" aria-pressed="' + feito(a) + '"><span class="kj">済</span>' + (feito(a) ? 'Estudado' : 'Marcar como estudado') + '</button>' +
+      (d.incidencia ? '<span class="incid">Incidência <b>' + h(d.incidencia) + '</b></span>' : '') + '</div>' +
+      notaHtml(d.nota) + conferirHtml(d.conferir) + '</div><div class="cab-kanji" aria-hidden="true">' + h(kanjiDe(a)) + '</div></header>';
+    if (temConteudo(a)) {
+      contQ = 0;
+      html += '<div class="blocos">' + a.blocos.map(renderBloco).join('') + '</div>';
+    } else {
+      var cam = a.caminho;
+      html += '<div class="vazio-box"><span class="kj" aria-hidden="true">空</span><p>Este assunto ainda não tem conteúdo. Para preenchê-lo, crie um arquivo em <code>conteudos/textos/</code> usando o caminho abaixo.</p>' +
+        '<div class="caminho"><code id="caminho-assunto">ESTUDO.assunto("' + h(cam) + '", { blocos: [ ] });</code><button type="button" data-acao="copiar">Copiar</button></div></div>';
+    }
+    if (Array.isArray(d.fontes) && d.fontes.length) {
+      html += '<section class="fontes"><h2>Fontes</h2><ul>' + d.fontes.map(function (f) {
+        return typeof f === 'string' ? '<li>' + inline(f) + '</li>' : '<li><a href="' + h(f.url) + '" target="_blank" rel="noopener">' + h(f.titulo || f.url) + '</a></li>';
+      }).join('') + '</ul></section>';
+    }
+    html += navegar(lista[i - 1], lista[i + 1], 'Assunto anterior', 'Próximo assunto');
+    return html;
+  }
+
+  function navegar(ant, prox, rA, rP) {
+    if (!ant && !prox) return '';
+    return '<nav class="navegar" aria-label="Navegação entre itens">' +
+      (ant ? '<a href="' + href(ant) + '"><small>← ' + rA + '</small><span>' + h(ant.titulo) + '</span></a>' : '') +
+      (prox ? '<a class="prox" href="' + href(prox) + '"><small>' + rP + ' →</small><span>' + h(prox.titulo) + '</span></a>' : '') + '</nav>';
+  }
+
+  function vNaoEncontrado(c) {
+    return '<header class="cab"><div><p class="sobre">Endereço não encontrado</p><h1>Esta página não existe</h1><p class="lead">O endereço <code>' + h(c) +
+      '</code> não corresponde a nenhum item. Ele pode ter sido renomeado. Use o sumário ou a busca para encontrá-lo.</p><div class="ferramentas"><a class="btn" href="#"><span class="kj">道</span>Voltar ao início</a></div></div></header>';
+  }
+
+  function avisosHtml() {
+    if (!problemas.length) return '';
+    return '<details class="problemas" open><summary>' + problemas.length + (problemas.length > 1 ? ' avisos' : ' aviso') + ' nos arquivos de conteúdo</summary><ul>' +
+      problemas.map(function (p) { return '<li><code>' + h(p.arquivo) + '</code>: ' + h(p.msg) + '</li>'; }).join('') +
+      '</ul><p>O restante do caderno continua funcionando.</p></details>';
+  }
+
+  /* ---------- Sumário lateral ---------- */
+  var expandidos = new Set(memoria.ler('dojo.abertos', []));
+  var atual = null;
+  var SETA = '<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M3 1l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
+
+  function itemArvore(no, nivel) {
+    var filhos = (no.tipo === 'assunto' || no.ref) ? [] : no.filhos;
+    var aberto = expandidos.has(no.caminho);
+    var r = real(no);
+    var ativo = atual && (atual === no || (no.ref && atual === r));
+    var kj = (no.tipo === 'secao' || no.tipo === 'conteudo') ? '<span class="kj" aria-hidden="true">' + h(kanjiDe(no)) + '</span>' : '';
+    var extra = no.tipo === 'assunto' ? (feito(no) ? '<span class="feito-mini" title="Estudado">済</span>' : '') :
+      no.ref ? '<span class="x" title="Compartilhado">↗</span>' : '';
+    return '<li class="n-' + no.tipo + (ativo ? ' ativo' : '') + '"><div class="arv-linha" style="--nivel:' + nivel + '">' +
+      (filhos.length ? '<button type="button" class="arv-seta" data-alternar="' + h(no.caminho) + '" aria-expanded="' + aberto + '" aria-label="' + (aberto ? 'Recolher ' : 'Expandir ') + h(no.titulo) + '">' + SETA + '</button>' : '<span class="arv-seta vazio"></span>') +
+      '<a href="' + href(no) + '"' + (ativo ? ' aria-current="page"' : '') + '>' + kj + '<span class="t">' + h(no.titulo) + '</span>' + extra + '</a></div>' +
+      (filhos.length && aberto ? '<ul>' + filhos.map(function (f) { return itemArvore(f, nivel + 1); }).join('') + '</ul>' : '') + '</li>';
+  }
+  function renderArvore() {
+    var el = document.getElementById('arvore'), topo = el.scrollTop;
+    var q = norm(document.getElementById('campo-busca').value).trim();
+    el.innerHTML = q ? resultadosBusca(q) : '<ul class="arv">' + raiz.map(function (s) { return itemArvore(s, 0); }).join('') + '</ul>';
+    el.scrollTop = topo;
+    var at = el.querySelector('[aria-current="page"]');
+    if (at && !q) {
+      var r = at.getBoundingClientRect(), b = el.getBoundingClientRect();
+      if (r.top < b.top || r.bottom > b.bottom) at.scrollIntoView({ block: 'center' });
+    }
+    var tot = todosAssuntos();
+    document.getElementById('progresso-geral').textContent = tot.filter(feito).length + ' de ' + fmt(tot.length) + ' estudados';
+  }
+  function textoBlocos(a) { if (a._txt == null) { try { a._txt = norm(JSON.stringify(a.blocos || [])); } catch (e) { a._txt = ''; } } return a._txt; }
+  function resultadosBusca(q) {
+    var termos = q.split(/\s+/).filter(Boolean), titulo = [], corpo = [];
+    nos.forEach(function (n) {
+      if (n.tipo === 'secao' || n.ref) return;
+      var t = norm(n.titulo);
+      if (termos.every(function (x) { return t.indexOf(x) >= 0; })) titulo.push(n);
+      else if (n.tipo === 'assunto' && termos.every(function (x) { return textoBlocos(n).indexOf(x) >= 0; })) corpo.push(n);
+    });
+    var lista = titulo.concat(corpo).slice(0, 80);
+    if (!lista.length) return '<p class="res-vazio">Nada encontrado para “' + h(q) + '”.</p>';
+    return '<ul class="res-busca">' + lista.map(function (n) {
+      var trilha = [], p = n.pai; while (p) { trilha.unshift(p.titulo); p = p.pai; }
+      return '<li><a href="' + href(n) + '">' + h(n.titulo) + (corpo.indexOf(n) >= 0 ? ' <mark>· no texto</mark>' : '') + '<small>' + h(trilha.join(' · ')) + '</small></a></li>';
+    }).join('') + '</ul>';
+  }
+
+  function renderMigalhas(no) {
+    var el = document.getElementById('migalhas');
+    if (!no) { el.innerHTML = '<span class="fim">Início</span>'; return; }
+    var trilha = [], p = no; while (p) { trilha.unshift(p); p = p.pai; }
+    el.innerHTML = '<a href="#">Início</a>' + trilha.map(function (n, i) {
+      var ultimo = i === trilha.length - 1, meio = i > 0 && i < trilha.length - 1;
+      return '<span class="sep' + (meio ? ' meio' : '') + '" aria-hidden="true">・</span>' + (ultimo ? '<span class="fim" aria-current="page">' + h(n.titulo) + '</span>' : '<a class="' + (meio ? 'meio' : '') + '" href="' + href(n) + '">' + h(n.titulo) + '</a>');
+    }).join('');
+  }
+
+  /* ---------- Roteamento (o endereço fica no #) ---------- */
+  function caminhoDoHash() {
+    var x = location.hash.replace(/^#/, '');
+    try { x = decodeURIComponent(x); } catch (e) { }
+    return x.split('--').filter(Boolean).join('/');
+  }
+  function render() {
+    var c = caminhoDoHash(), no = c ? nos.get(c) : null, view;
+    if (no && no.ref) no = no.alvo;
+    atual = no;
+    if (no) { var p = no.pai; while (p) { expandidos.add(p.caminho); p = p.pai; } if (no.tipo !== 'assunto') expandidos.add(no.caminho); }
+    try {
+      if (c && !no) view = vNaoEncontrado(c);
+      else if (!no) view = vInicio();
+      else view = { secao: vSecao, conteudo: vConteudo, materia: vMateria, assunto: vAssunto }[no.tipo](no);
+    } catch (e) {
+      view = '<div class="aviso-bloco"><b>Erro ao montar esta página:</b> ' + h(e.message) + '</div>';
+    }
+    document.getElementById('conteudo').innerHTML = avisosHtml() + view;
+    document.getElementById('marca-dagua').textContent = no ? kanjiDe(no) : '道';
+    document.title = (no ? no.titulo + ' · ' : '') + 'Dojo de Estudos';
+    renderMigalhas(no);
+    renderArvore();
+    if (no && no.tipo === 'assunto') memoria.gravar('dojo.ultimo', no.caminho);
+    memoria.gravar('dojo.abertos', Array.from(expandidos));
+  }
+
+  /* ---------- Interações ---------- */
+  function ligarEventos() {
+    window.addEventListener('hashchange', function () { render(); window.scrollTo(0, 0); fecharMenu(); });
+    document.getElementById('arvore').addEventListener('click', function (e) {
+      var t = e.target.closest('[data-alternar]');
+      if (t) {
+        var c = t.getAttribute('data-alternar');
+        if (expandidos.has(c)) expandidos.delete(c); else expandidos.add(c);
+        memoria.gravar('dojo.abertos', Array.from(expandidos));
+        renderArvore();
+        return;
+      }
+      if (e.target.closest('a')) fecharMenu();
+    });
+    var busca = document.getElementById('campo-busca');
+    busca.addEventListener('input', renderArvore);
+    busca.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') { busca.value = ''; renderArvore(); }
+      if (e.key === 'Enter') { var a = document.querySelector('.res-busca a'); if (a) { location.hash = a.getAttribute('href'); busca.blur(); } }
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === '/' && !/input|textarea/i.test(document.activeElement.tagName)) { e.preventDefault(); abrirMenu(); busca.focus(); }
+    });
+    document.getElementById('btn-menu').addEventListener('click', function () { document.body.classList.contains('menu-aberto') ? fecharMenu() : abrirMenu(); });
+    document.getElementById('veu').addEventListener('click', fecharMenu);
+
+    document.getElementById('conteudo').addEventListener('click', function (e) {
+      var alvo;
+      if ((alvo = e.target.closest('[data-acao="estudado"]'))) {
+        if (!atual) return;
+        if (estudados[atual.caminho]) delete estudados[atual.caminho]; else estudados[atual.caminho] = Date.now();
+        memoria.gravar('dojo.estudados', estudados);
+        var y = window.scrollY; render(); window.scrollTo(0, y);
+        return;
+      }
+      if ((alvo = e.target.closest('[data-acao="copiar"]'))) {
+        var cod = document.getElementById('caminho-assunto');
+        var selecionar = function () { var r = document.createRange(); r.selectNodeContents(cod); var s = getSelection(); s.removeAllRanges(); s.addRange(r); };
+        try {
+          navigator.clipboard.writeText(cod.textContent).then(function () { alvo.textContent = 'Copiado'; }, function () { selecionar(); alvo.textContent = 'Selecionado'; });
+        } catch (err) { selecionar(); alvo.textContent = 'Selecionado'; }
+        return;
+      }
+      if ((alvo = e.target.closest('.carta'))) {
+        alvo.classList.toggle('virada');
+        var v = alvo.classList.contains('virada');
+        alvo.setAttribute('aria-pressed', v);
+        alvo.querySelector('small').textContent = v ? 'Resposta' : 'Pergunta';
+        return;
+      }
+      if ((alvo = e.target.closest('[data-alt]'))) {
+        var ol = alvo.closest('.q-alts'), certa = +ol.getAttribute('data-correta'), escolhida = +alvo.getAttribute('data-alt');
+        ol.querySelectorAll('[data-alt]').forEach(function (b) {
+          var i = +b.getAttribute('data-alt');
+          if (i === certa) b.classList.add('certa'); else if (i === escolhida) b.classList.add('errada');
+          b.disabled = true;
+        });
+        var ret = ol.parentNode.querySelector('.q-retorno'), ver = ret.querySelector('.veredito');
+        ver.className = 'veredito ' + (escolhida === certa ? 'ok' : 'nao');
+        ver.textContent = escolhida === certa ? 'Correta.' : 'Incorreta. A resposta é a letra ' + LETRAS[certa] + '.';
+        ret.hidden = false;
+        return;
+      }
+      if ((alvo = e.target.closest('.q-refazer'))) {
+        var q = alvo.closest('.bloco-corpo');
+        q.querySelectorAll('[data-alt]').forEach(function (b) { b.disabled = false; b.classList.remove('certa', 'errada'); });
+        q.querySelector('.q-retorno').hidden = true;
+      }
+    });
+  }
+  function abrirMenu() { document.body.classList.add('menu-aberto'); document.getElementById('btn-menu').setAttribute('aria-expanded', 'true'); }
+  function fecharMenu() { document.body.classList.remove('menu-aberto'); document.getElementById('btn-menu').setAttribute('aria-expanded', 'false'); }
+
+  function iniciar() {
+    if (pronto) return;
+    try { construir(); } catch (e) { problema('index.html', 'erro ao montar a estrutura: ' + e.message); }
+    pronto = true;
+    ligarEventos();
+    render();
+  }
+
+  return api;
+})();
+</script>
+<script src="conteudos/indice.js" onerror="ESTUDO.falhou('conteudos/indice.js')"></script>
