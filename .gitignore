@@ -41,5 +41,8 @@ desktop.ini
 !.vscode/extensions.json
 .idea/
 
+# Pesquisas e conversas exportadas: ficam só no computador (podem ter dados pessoais)
+contexto/
+
 # Claude Code: configurações locais de cada pessoa
 .claude/settings.local.json

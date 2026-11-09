@@ -79,6 +79,7 @@ conteudos/
   textos/*.js               Blocos de cada assunto (hoje só matematica-regra-de-tres.js).
   _MODELO.js                Guia de todos os tipos de bloco (não é carregado; é referência).
 contexto/                   Pesquisas e conversas que originaram o projeto (só referência).
+                            NÃO é versionada (está no .gitignore): existe apenas no computador do Daniel.
 ```
 
 ### Como rodar
